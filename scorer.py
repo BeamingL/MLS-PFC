@@ -1,4 +1,4 @@
-"""3D-DSRS: three-dimensional dynamic skill scoring module."""
+"""Multi-dimensional dynamic skill scoring module."""
 
 from __future__ import annotations
 
