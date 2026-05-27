@@ -1,4 +1,4 @@
-"""选择性解码模块：生成 + chrF/ROUGE-L/BLEU-4 综合评分。"""
+"""Selective decoding module: generation + combined chrF/ROUGE-L/BLEU-4 scoring."""
 
 from __future__ import annotations
 
@@ -11,7 +11,7 @@ from .utils import min_max_normalize
 
 def selective_decode(model, tokenizer, samples: List[dict], max_new_tokens: int = 128) -> Dict[str, float]:
     """
-    对候选样本做自回归生成并计算 M_final。
+    Perform autoregressive generation for candidate samples and compute M_final.
 
     M_final(d) = (Norm(chrF) + Norm(ROUGE-L) + Norm(BLEU-4)) / 3
     """
@@ -21,8 +21,8 @@ def selective_decode(model, tokenizer, samples: List[dict], max_new_tokens: int 
     try:
         from rouge_score import rouge_scorer
         from sacrebleu.metrics import BLEU, CHRF
-    except Exception as exc:  # pragma: no cover - 依赖缺失时明确提示
-        raise ImportError("selective_decode 需要安装 `sacrebleu` 和 `rouge-score`。") from exc
+    except Exception as exc:  # pragma: no cover - explicit hint when dependencies are missing
+        raise ImportError("selective_decode Installation required `sacrebleu` 和 `rouge-score`。") from exc
 
     sample_ids = [str(s.get("sample_id", idx)) for idx, s in enumerate(samples)]
     prompts = [str(s.get("input_text", "")) for s in samples]

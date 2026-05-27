@@ -1,4 +1,4 @@
-"""3D-DSRS: 三维动态技能评分模块。"""
+"""3D-DSRS: three-dimensional dynamic skill scoring module."""
 
 from __future__ import annotations
 
@@ -9,12 +9,12 @@ from .utils import percentile_25
 
 class SkillScorer:
     """
-    三维动态技能评分系统 (3D-DSRS)。
+    Three-dimensional dynamic skill scoring system (3D-DSRS).
 
-    论文对应关系：
-    - 代理学习速度 v_t(d)
-    - 代理稳定性 S_t(d)
-    - 离散评分 r_t(d) in {1,2,3,4,5}
+    Paper notation mapping:
+    - agent learning speed v_t(d)
+    - agent stability S_t(d)
+    - discrete score r_t(d) in {1,2,3,4,5}
     """
 
     def __init__(self, tau_stable: float = 0.7, tau_unstable: float = 0.3, alpha: float = 0.1, epsilon: float = 1e-8):
@@ -26,12 +26,12 @@ class SkillScorer:
         self._loss_history: Dict[int, Dict[int, float]] = {}
 
     def init_task(self, num_samples: int):
-        """新任务开始时初始化评分与 loss 记录。"""
+        """Initialize scores and loss records at the start of a new task."""
         self._scores = {idx: 3 for idx in range(int(num_samples))}
         self._loss_history = {idx: {} for idx in range(int(num_samples))}
 
     def record_epoch_loss(self, epoch: int, sample_losses: Dict[int, float]):
-        """记录每个 epoch 的样本 loss。"""
+        """Record sample losses for each epoch."""
         epoch = int(epoch)
         for sample_id, loss in sample_losses.items():
             sid = int(sample_id)
@@ -41,7 +41,7 @@ class SkillScorer:
             self._loss_history[sid][epoch] = float(loss)
 
     def update_scores(self, epoch: int):
-        """epoch>=2 时按 3D-DSRS 规则更新评分。"""
+        """Update scores by 3D-DSRS rules when epoch >= 2."""
         epoch = int(epoch)
         if epoch < 2:
             return
@@ -75,7 +75,7 @@ class SkillScorer:
             self._scores[sid] = int(max(1, min(5, score + step)))
 
     def _rating_step(self, v_t: float, l_t: float, p25: float, s_t: float) -> int:
-        """评分步进函数 φ_t(d)。"""
+        """Score step function φ_t(d)."""
         if ((v_t > 0.0) or (l_t < p25)) and (s_t >= self.tau_stable):
             return 1
         if (v_t < -self.alpha) or (s_t <= self.tau_unstable):
@@ -84,8 +84,8 @@ class SkillScorer:
 
     def get_candidate_pool(self, n_select: int) -> List[int]:
         """
-        按评分高到低构建候选池，返回索引列表。
-        为满足 |C|>=n_select，会保留到“临界分层”全部样本。
+        Build a candidate pool from high to low scores and return index list.
+        To satisfy |C| >= n_select, all samples at the threshold layer are kept.
         """
         if n_select <= 0:
             return []
@@ -103,11 +103,11 @@ class SkillScorer:
         return [sid for sid in ranked if self._scores[sid] >= threshold_score]
 
     def get_scores(self) -> Dict[int, int]:
-        """返回当前全部样本评分。"""
+        """Return current scores for all samples."""
         return dict(self._scores)
 
     def get_distribution(self) -> Dict[int, int]:
-        """返回评分分布，便于日志统计。"""
+        """Return score distribution for logging statistics."""
         dist = {i: 0 for i in range(1, 6)}
         for s in self._scores.values():
             dist[int(s)] = dist.get(int(s), 0) + 1

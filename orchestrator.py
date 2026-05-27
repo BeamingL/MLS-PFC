@@ -1,4 +1,4 @@
-"""ReplayOrchestrator：串联评分、记忆库与自适应采样的顶层编排器。"""
+"""ReplayOrchestrator: top-level orchestrator linking scoring, memory buffer, and adaptive sampling."""
 
 from __future__ import annotations
 
@@ -22,9 +22,9 @@ logger = logging.getLogger(__name__)
 
 class ReplayOrchestrator:
     """
-    闭环记忆回放编排器。
+    Closed-loop memory replay orchestrator.
 
-    论文对应关系：
+    Paper module mapping:
     - Module A: 3D-DSRS -> SkillScorer
     - Module B: selective decode + MemoryBuffer
     - Module C: P-EGFS -> PEGFSSampler
@@ -72,13 +72,13 @@ class ReplayOrchestrator:
             adaptive=self.use_adaptive_sampling,
         )
 
-        # 任务级 LoRA 参数归档
+        # Task-level LoRA parameter archiving
         self.archived_lora_states: Dict[int, Dict[str, torch.Tensor]] = {}
         self.historical_params: Dict[int, torch.Tensor] = {}
 
     def train_task(self, task_id: int, train_dataset, eval_fn=None):
         """
-        训练单个任务：训练 + 评分 + 入库 + 参数归档。
+        Train a single task: training + scoring + buffer insertion + parameter archiving.
         """
         task_id = int(task_id)
         records = self._dataset_to_records(train_dataset)
@@ -158,13 +158,13 @@ class ReplayOrchestrator:
                 avg_loss = {idx: safe_mean(vals) for idx, vals in epoch_sample_losses.items()}
                 self.scorer.record_epoch_loss(epoch=epoch, sample_losses=avg_loss)
                 self.scorer.update_scores(epoch=epoch)
-                logger.info("Task %s Epoch %s 评分分布: %s", task_id, epoch, self.scorer.get_distribution())
+                logger.info("Task %s Epoch %s Score distribution: %s", task_id, epoch, self.scorer.get_distribution())
 
-        # 入库与强度更新
+        # Buffer insertion and strength update
         summary = self._finalize_task_memory(task_id=task_id, records=records)
         self._archive_task_lora(task_id=task_id)
 
-        # 对历史任务重新解码，动态更新 S_i 与 M_final
+        # Re-decode historical tasks and dynamically update S_i and M_final
         if replay_enabled and self.memory_buffer.num_tasks > 1:
             self._refresh_historical_scores(current_task_id=task_id)
 
@@ -173,7 +173,7 @@ class ReplayOrchestrator:
         return summary
 
     def run_continual_learning(self, task_sequence: Sequence[Tuple[int, Any]]):
-        """执行完整持续学习序列。"""
+        """Run the full continual-learning sequence."""
         results = []
         for task_id, dataset in task_sequence:
             logger.info("Start task %s", task_id)
@@ -182,7 +182,7 @@ class ReplayOrchestrator:
         return results
 
     def _is_replay_enabled(self) -> bool:
-        # 三开关都关时，退化为 Sequential Fine-tuning（无 replay）
+        # If all three switches are off, it degrades to Sequential Fine-tuning (no replay).
         return self.use_scoring or self.use_adaptive_sampling or self.use_capacity_balance
 
     def _finalize_task_memory(self, task_id: int, records: List[dict]) -> Dict[str, Any]:
@@ -216,7 +216,7 @@ class ReplayOrchestrator:
             memory_strength=memory_strength,
         )
         logger.info(
-            "Task %s 入库完成: candidates=%s strength=%.4f current_tasks=%s",
+            "Task %s Inventory completed: candidates=%s strength=%.4f current_tasks=%s",
             task_id,
             len(candidates),
             memory_strength,
