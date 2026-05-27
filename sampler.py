@@ -1,4 +1,4 @@
-"""P-EGFS sampler: adaptive replay based on parameter drift and memory strength."""
+"""PFC module: adaptive replay based on parameter drift and memory strength."""
 
 from __future__ import annotations
 
