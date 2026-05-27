@@ -1,4 +1,4 @@
-"""Multi-dimensional dynamic skill scoring module."""
+"""MLS module:Multi-dimensional Dynamic Learning Signal Scoring module."""
 
 from __future__ import annotations
 
